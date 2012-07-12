@@ -1,0 +1,17 @@
+Package: com.arichardson.openInChrome
+Name: Open in Chrome
+Version: 1.0-1
+Description: Open Safari links in Google Chrome!
+Section: Tweaks
+Depends: firmware (>= 5.0), mobilesubstrate
+Conflicts: 
+Replaces: 
+Priority: optional
+Architecture: iphoneos-arm
+Author: Andrew Richardson <andrewr114@gmail.com>
+dev: Andrew Richardson <andrewr114@gmail.com>
+Homepage: 
+Depiction: 
+Maintainer: 
+Icon: 
+
