@@ -4,4 +4,11 @@
 
 #ifdef __OBJC__
     #import <Foundation/Foundation.h>
+
+#ifdef DEBUG
+#define DLog(format, ...) NSLog(format)
+#else
+#define DLog(format, ...)
+#endif
+
 #endif

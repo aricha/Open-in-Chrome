@@ -14,21 +14,26 @@
 #import <substrate.h>
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
+#import "OpenInChromeModel.h"
 
 static NSString *const OpenInChromeBundleID = @"com.arichardson.openInChrome";
-
 static NSString *const kOpenInChromeEnabled = @"openInChromeEnabled";
 
-@class SBDisplay;
+static NSString *const ChromeSchemeHTTP = @"googlechrome";
+static NSString *const ChromeSchemeHTTPS = @"googlechromes";
+
+@interface UIWebClip : NSObject
+@property(retain) NSURL* pageURL;
+@end
+
+@interface SBBookmarkIcon : NSObject
+@property (nonatomic, retain) UIWebClip *webClip;
+- (void)launch;
+@end
 
 @interface SpringBoard : UIApplication
 -(void)applicationOpenURL:(id)url publicURLsOnly:(BOOL)only animating:(BOOL)animating sender:(id)sender additionalActivationFlag:(unsigned)flag;
 -(NSString *)displayIDForURLScheme:(NSString *)scheme isPublic:(BOOL)isPublic;
-@end
-
-@interface SBApplicationController : NSObject
-+(SBApplicationController *)sharedInstance;
--(SBDisplay *)applicationWithDisplayIdentifier:(NSString *)displayID;
 @end
 
 static BOOL hookEnabled = YES;
@@ -54,44 +59,55 @@ static void SettingsDidChangeNotificationCallback(CFNotificationCenterRef center
 
 CHConstructor
 {	
-    @autoreleasepool {        
+    @autoreleasepool {
         CFNotificationCenterRef darwin = CFNotificationCenterGetDarwinNotifyCenter();
         CFNotificationCenterAddObserver(darwin, NULL, SettingsDidChangeNotificationCallback, CFSTR("com.arichardson.openInChrome.settingsChanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
         
         UpdateOpenInChromeSettings();
         
-        static Class _SBApplicationController, _SpringBoard;
+        static Class _SpringBoard, _SBBookmarkIcon;
         
-        _SBApplicationController = NSClassFromString(@"SBApplicationController");
         _SpringBoard = NSClassFromString(@"SpringBoard");
+        _SBBookmarkIcon = NSClassFromString(@"SBBookmarkIcon");
         
         static IMP origOpenURL = NULL;
         SEL openURLSel = @selector(applicationOpenURL:publicURLsOnly:animating:sender:additionalActivationFlag:);
         
-        void (^chromeHookOpenURL)(SpringBoard *, NSURL *, BOOL, BOOL, id, unsigned) = nil;
-        chromeHookOpenURL = ^(SpringBoard *sb, NSURL *url, BOOL publicOnly, BOOL animate, id sender, unsigned flag)
+        void (^chromeOpenURL)(SpringBoard *, NSURL *, BOOL, BOOL, id, unsigned) = nil;
+        chromeOpenURL = ^(SpringBoard *sb, NSURL *url, BOOL publicOnly, BOOL animate, id sender, unsigned flag)
         {
-            if (hookEnabled && [[sb displayIDForURLScheme:[url scheme] isPublic:YES] isEqualToString:@"com.apple.mobilesafari"])
-            {                
-                // TODO: add support for searches
-                // search URL: x-web-search:///?{query}
-                // wikipedia URL: x-web-search://wikipedia/?{query}
-                // chrome prefs location: {rootAppDir}/Library/Application Support/Google/Chrome/Default/Preferences
-                // stored in JSON format; key: "default_search_provider"->"search_url"
-                
-                NSString *chromeScheme = ([[url scheme] isEqualToString:@"https"] ? @"googlecrhomes" : @"googlechrome");
-                
-                NSString *displayID = [sb displayIDForURLScheme:chromeScheme isPublic:YES];
-                if (displayID) {
-                    // Chrome installed, replace URL
-                    url = [NSURL URLWithString:[NSString stringWithFormat:@"%@:%@", chromeScheme, [url resourceSpecifier]]];
-                }
+            if (hookEnabled && [OpenInChromeModel canHandleURL:url])
+            {
+                NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:url];
+                if (replacedURL)
+                    url = replacedURL;
             }
             
             origOpenURL(sb, openURLSel, url, publicOnly, animate, sender, flag);
         };
         
-        IMP chromeHookImp = imp_implementationWithBlock(chromeHookOpenURL);
-        MSHookMessageEx(_SpringBoard, openURLSel, chromeHookImp, &origOpenURL);
+        IMP chromeOpenURLImp = imp_implementationWithBlock(chromeOpenURL);
+        MSHookMessageEx(_SpringBoard, openURLSel, chromeOpenURLImp, &origOpenURL);
+        
+        static IMP origLaunch = NULL;
+        SEL launchSel = @selector(launch);
+        void (^chromeLaunchWebClip)(SBBookmarkIcon *) = ^(SBBookmarkIcon *icon)
+        {
+            if (hookEnabled) {
+                NSURL *pageURL = [icon webClip].pageURL;
+                
+                if (pageURL && [OpenInChromeModel canHandleURL:pageURL]) {
+                    NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:pageURL];
+                    if (replacedURL) {
+                        [[UIApplication sharedApplication] openURL:replacedURL];
+                        return;
+                    }
+                }
+            }
+            origLaunch(icon, launchSel);
+        };
+        
+        IMP chromeLaunchWebClipImp = imp_implementationWithBlock(chromeLaunchWebClip);
+        MSHookMessageEx(_SBBookmarkIcon, launchSel, chromeLaunchWebClipImp, &origLaunch);
     }
 }

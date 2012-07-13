@@ -10,6 +10,9 @@
 		0D493C9B159D729C004DB4F8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D493C9A159D729C004DB4F8 /* Foundation.framework */; };
 		0D493CA5159D729D004DB4F8 /* openInChrome.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D493CA4159D729D004DB4F8 /* openInChrome.mm */; };
 		0D493CB0159D79A1004DB4F8 /* libsubstrate.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D493CAF159D79A1004DB4F8 /* libsubstrate.dylib */; };
+		0D85913E15AEAD7B0095A559 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D85913D15AEAD7B0095A559 /* UIKit.framework */; };
+		0D85914115AFED970095A559 /* OpenInChromeModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D85913F15AFED970095A559 /* OpenInChromeModel.h */; };
+		0D85914215AFED970095A559 /* OpenInChromeModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D85914015AFED970095A559 /* OpenInChromeModel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +26,9 @@
 		0D493CB4159D843B004DB4F8 /* OpenInChrome.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = OpenInChrome.plist; sourceTree = "<group>"; };
 		0D493CB5159D8563004DB4F8 /* OpenInChrome@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "OpenInChrome@2x.png"; sourceTree = "<group>"; };
 		0D493CB6159D8563004DB4F8 /* OpenInChrome.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = OpenInChrome.png; sourceTree = "<group>"; };
+		0D85913D15AEAD7B0095A559 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		0D85913F15AFED970095A559 /* OpenInChromeModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenInChromeModel.h; sourceTree = "<group>"; };
+		0D85914015AFED970095A559 /* OpenInChromeModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenInChromeModel.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -30,6 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D85913E15AEAD7B0095A559 /* UIKit.framework in Frameworks */,
 				0D493CB0159D79A1004DB4F8 /* libsubstrate.dylib in Frameworks */,
 				0D493C9B159D729C004DB4F8 /* Foundation.framework in Frameworks */,
 			);
@@ -58,6 +65,7 @@
 		0D493C99159D729C004DB4F8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				0D85913D15AEAD7B0095A559 /* UIKit.framework */,
 				0D493CAF159D79A1004DB4F8 /* libsubstrate.dylib */,
 				0D493C9A159D729C004DB4F8 /* Foundation.framework */,
 			);
@@ -67,6 +75,8 @@
 		0D493C9C159D729C004DB4F8 /* openInChrome */ = {
 			isa = PBXGroup;
 			children = (
+				0D85913F15AFED970095A559 /* OpenInChromeModel.h */,
+				0D85914015AFED970095A559 /* OpenInChromeModel.m */,
 				0D493CA4159D729D004DB4F8 /* openInChrome.mm */,
 				0D493C9D159D729C004DB4F8 /* Package */,
 				0D493CA1159D729C004DB4F8 /* Supporting Files */,
@@ -150,6 +160,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D85914115AFED970095A559 /* OpenInChromeModel.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +232,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0D493CA5159D729D004DB4F8 /* openInChrome.mm in Sources */,
+				0D85914215AFED970095A559 /* OpenInChromeModel.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
