@@ -10,7 +10,7 @@
 
 @interface OpenInChromeModel : NSObject
 
-+ (BOOL)canHandleURL:(NSURL *)url;
++ (BOOL)shouldHandleURL:(NSURL *)url;
 + (NSURL *)formatURLForChrome:(NSURL *)url;
 
 @end

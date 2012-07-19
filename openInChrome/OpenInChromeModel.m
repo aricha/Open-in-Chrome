@@ -9,6 +9,14 @@
 #import "OpenInChromeModel.h"
 #import <UIKit/UIKit.h>
 
+UIKIT_EXTERN UIApplication *UIApp;
+
+@interface UIApplication ()
+
+-(NSString *)displayIDForURLScheme:(NSString *)urlscheme isPublic:(BOOL)aPublic;
+
+@end
+
 static NSString *const ChromeSchemeHTTP = @"googlechrome";
 static NSString *const ChromeSchemeHTTPS = @"googlechromes";
 
@@ -40,8 +48,19 @@ static NSString *const ChromeSchemeHTTPS = @"googlechromes";
     return [sb canOpenURL:url];
 }
 
-+ (BOOL)canHandleURL:(NSURL *)url {
-    return ([self isSupportedURLScheme:[url scheme]] && [self isChromeAppInstalled]);
++ (BOOL)shouldHandleURL:(NSURL *)url {
+    BOOL shouldHandleURL = NO;
+    BOOL canHandleURL = ([self isSupportedURLScheme:[url scheme]] && [self isChromeAppInstalled]);
+    if (canHandleURL) {
+        if ([UIApp respondsToSelector:@selector(displayIDForURLScheme:isPublic:)]) {
+            // ignore URLs that are directed to other apps (ie. Maps, iTunes)
+            shouldHandleURL = ([[UIApp displayIDForURLScheme:[url scheme] isPublic:YES] isEqualToString:@"com.apple.mobilesafari"]);
+        }
+        else
+            shouldHandleURL = canHandleURL;
+    }
+    
+    return shouldHandleURL;
 }
 
 + (NSString *)addPercentEscapesForString:(NSString *)string {
@@ -54,16 +73,18 @@ static NSString *const ChromeSchemeHTTPS = @"googlechromes";
 
 + (NSURL *)defaultWebSearchURLForQuery:(NSString *)query {
     NSString *languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
-    NSString *escapedQuery = [self addPercentEscapesForString:query];
     
-    NSString *searchString = [NSString stringWithFormat:@"%@://www.google.com/search?q=%@&ie=UTF-8&oe=UTF-8&hl=%@", ChromeSchemeHTTP, escapedQuery, languageCode];
+    NSString *searchString = [NSString stringWithFormat:@"%@://www.google.com/search?q=%@&ie=UTF-8&oe=UTF-8&hl=%@", ChromeSchemeHTTP, query, languageCode];
     
     return [NSURL URLWithString:searchString];
 }
 
 + (NSURL *)buildSearchURLForSearchEngine:(NSDictionary *)engine withQuery:(NSString *)query {
-    NSString *searchURLKey = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad ? @"SearchURLTemplatePad" : @"SearchURLTemplate");
-    NSString *searchURLTemplate = [engine objectForKey:searchURLKey];
+    NSString *searchURLTemplate = nil;
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+        searchURLTemplate = [engine objectForKey:@"SearchURLTemplatePad"];
+    if (!searchURLTemplate)
+        searchURLTemplate = [engine objectForKey:@"SearchURLTemplate"];
     if (!searchURLTemplate)
         return nil;
     
@@ -203,12 +224,10 @@ static NSString *const ChromeSchemeHTTPS = @"googlechromes";
     // wikipedia URL: x-web-search://wikipedia/?{query}
     
     if ([[url scheme] isEqualToString:@"x-web-search"]) {
-        // must escape query manually
-        NSString *query = [(NSString *) CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                                                (CFStringRef)[url query],
-                                                                                NULL,
-                                                                                (CFStringRef) @"!*'();:@&=+$,/?%#[]",
-                                                                                kCFStringEncodingUTF8) autorelease];
+        // must escape query manually - escpaes for spaces are added by the system,
+        // but not for other characters apparently :(
+        NSString *query = [[url query] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        query = [self addPercentEscapesForString:query];
         
         if ([[url host] isEqualToString:@"wikipedia"]) {
             NSString *languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];

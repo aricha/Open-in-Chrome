@@ -19,9 +19,6 @@
 static NSString *const OpenInChromeBundleID = @"com.arichardson.openInChrome";
 static NSString *const kOpenInChromeEnabled = @"openInChromeEnabled";
 
-static NSString *const ChromeSchemeHTTP = @"googlechrome";
-static NSString *const ChromeSchemeHTTPS = @"googlechromes";
-
 @interface UIWebClip : NSObject
 @property(retain) NSURL* pageURL;
 @end
@@ -76,7 +73,7 @@ CHConstructor
         void (^chromeOpenURL)(SpringBoard *, NSURL *, BOOL, BOOL, id, unsigned) = nil;
         chromeOpenURL = ^(SpringBoard *sb, NSURL *url, BOOL publicOnly, BOOL animate, id sender, unsigned flag)
         {
-            if (hookEnabled && [OpenInChromeModel canHandleURL:url])
+            if (hookEnabled && [OpenInChromeModel shouldHandleURL:url])
             {
                 NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:url];
                 if (replacedURL)
@@ -96,7 +93,7 @@ CHConstructor
             if (hookEnabled) {
                 NSURL *pageURL = [icon webClip].pageURL;
                 
-                if (pageURL && [OpenInChromeModel canHandleURL:pageURL]) {
+                if (pageURL && [OpenInChromeModel shouldHandleURL:pageURL]) {
                     NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:pageURL];
                     if (replacedURL) {
                         [[UIApplication sharedApplication] openURL:replacedURL];
