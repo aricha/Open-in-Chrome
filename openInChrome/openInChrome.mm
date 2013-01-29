@@ -94,7 +94,7 @@ CHOptimizedMethod7(super, void, SpringBoard, applicationOpenURL, NSURL *, url, w
 		if (replacedURL) {
 			url = replacedURL;
 			
-			if (OCShouldReplaceURLForApplication(application)) {
+			if (OCShouldReplaceURLForApplication(application) && CHRespondsTo(self, displayIDForURLScheme:isPublic:)) {
 				NSString *displayID = [self displayIDForURLScheme:ChromeSchemeHTTP isPublic:YES];
 				if (displayID) {
 					SBApplication *replacedApp = [[CHClass(SBApplicationController) sharedInstanceIfExists] applicationWithDisplayIdentifier:displayID];
