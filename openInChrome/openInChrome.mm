@@ -10,101 +10,118 @@
 // see https://github.com/rpetrich/CaptainHook/
 
 #import <Foundation/Foundation.h>
-#import "CaptainHook/CaptainHook.h"
-#import <substrate.h>
+#import <CaptainHook.h>
 #import <UIKit/UIKit.h>
-#import <objc/runtime.h>
 #import "OpenInChromeModel.h"
 
-static NSString *const OpenInChromeBundleID = @"com.arichardson.openInChrome";
-static NSString *const kOpenInChromeEnabled = @"openInChromeEnabled";
+static NSString *const OCBundleID = @"com.arichardson.openInChrome";
+static NSString *const kOCOpenInChromeEnabled = @"openInChromeEnabled";
 
-@interface UIWebClip : NSObject
-@property(retain) NSURL* pageURL;
-@end
+static BOOL OCHookEnabled = YES;
 
-@interface SBBookmarkIcon : NSObject
-@property (nonatomic, retain) UIWebClip *webClip;
-- (void)launch;
-@end
-
-@interface SpringBoard : UIApplication
--(void)applicationOpenURL:(id)url publicURLsOnly:(BOOL)only animating:(BOOL)animating sender:(id)sender additionalActivationFlag:(unsigned)flag;
--(NSString *)displayIDForURLScheme:(NSString *)scheme isPublic:(BOOL)isPublic;
-@end
-
-static BOOL hookEnabled = YES;
-
-static void UpdateOpenInChromeSettings() {
-    NSDictionary *settings = [[NSUserDefaults standardUserDefaults] persistentDomainForName:OpenInChromeBundleID];
+static void OCUpdateSettings() {
+    NSDictionary *settings = [[NSUserDefaults standardUserDefaults] persistentDomainForName:OCBundleID];
     
-    NSNumber *enabled = [settings objectForKey:kOpenInChromeEnabled];
+    NSNumber *enabled = [settings objectForKey:kOCOpenInChromeEnabled];
     if (enabled) {
-        hookEnabled = [enabled boolValue];
+        OCHookEnabled = [enabled boolValue];
     }
 }
 
-static void SettingsDidChangeNotificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
+static void OCSettingsDidChangeNotificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-	NSDictionary *settings = [[NSUserDefaults standardUserDefaults] persistentDomainForName:OpenInChromeBundleID];
+	NSDictionary *settings = [[NSUserDefaults standardUserDefaults] persistentDomainForName:OCBundleID];
     
-    NSNumber *enabled = [settings objectForKey:kOpenInChromeEnabled];
+    NSNumber *enabled = [settings objectForKey:kOCOpenInChromeEnabled];
     if (enabled) {
-        hookEnabled = [enabled boolValue];
+        OCHookEnabled = [enabled boolValue];
     }
+}
+
+static BOOL OCShouldReplaceURLForApplication(SBApplication *app)
+{
+	if (!app) return YES;
+	
+	NSString *displayID = [app displayIdentifier];
+	
+	// only replace for Safari (or no specific app)
+	return (!displayID || [displayID isEqualToString:@"com.apple.mobilesafari"]);
+}
+
+CHDeclareClass(SpringBoard)
+CHDeclareClass(SBBookmarkIcon)
+CHDeclareClass(SBApplicationController)
+
+// iOS 5
+CHOptimizedMethod5(super, void, SpringBoard, applicationOpenURL, NSURL *, url, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animate, sender, id, sender, additionalActivationFlag, unsigned, flag)
+{
+	CHDebugLog(@"Opening URL %@ using iOS 5 method", url);
+	
+	if (OCHookEnabled && [OpenInChromeModel shouldHandleURL:url])
+	{
+		NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:url];
+		if (replacedURL)
+			url = replacedURL;
+	}
+	
+	CHSuper5(SpringBoard, applicationOpenURL, url, publicURLsOnly, publicOnly, animating, animate, sender, sender, additionalActivationFlag, flag);
+}
+
+CHOptimizedMethod0(super, void, SBBookmarkIcon, launch)
+{
+	if (OCHookEnabled) {
+		NSURL *pageURL = [self webClip].pageURL;
+		
+		if (pageURL && [OpenInChromeModel shouldHandleURL:pageURL]) {
+			NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:pageURL];
+			if (replacedURL) {
+				[[UIApplication sharedApplication] openURL:replacedURL];
+				return;
+			}
+		}
+	}
+	CHSuper0(SBBookmarkIcon, launch);
+}
+
+// iOS 6+
+CHOptimizedMethod7(super, void, SpringBoard, applicationOpenURL, NSURL *, url, withApplication, SBApplication *, application, sender, id, sender, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animating, needsPermission, BOOL, needsPermission, additionalActivationFlags, id, flags)
+{
+	CHDebugLog(@"Opening URL %@ with application %@ using iOS 6 method", url, application);
+	
+	if (OCHookEnabled && [OpenInChromeModel shouldHandleURL:url])
+	{
+		NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:url];
+		if (replacedURL) {
+			url = replacedURL;
+			
+			if (OCShouldReplaceURLForApplication(application)) {
+				NSString *displayID = [self displayIDForURLScheme:ChromeSchemeHTTP isPublic:YES];
+				if (displayID) {
+					SBApplication *replacedApp = [[CHClass(SBApplicationController) sharedInstanceIfExists] applicationWithDisplayIdentifier:displayID];
+					CHDebugLog(@"replacing app %@ with Chrome app %@ with displayID %@", application, replacedApp, displayID);
+					application = replacedApp;
+				}
+			}
+		}
+	}
+	
+	CHSuper7(SpringBoard, applicationOpenURL, url, withApplication, application, sender, sender, publicURLsOnly, publicOnly, animating, animating, needsPermission, needsPermission, additionalActivationFlags, flags);
 }
 
 CHConstructor
-{	
+{
     @autoreleasepool {
         CFNotificationCenterRef darwin = CFNotificationCenterGetDarwinNotifyCenter();
-        CFNotificationCenterAddObserver(darwin, NULL, SettingsDidChangeNotificationCallback, CFSTR("com.arichardson.openInChrome.settingsChanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+        CFNotificationCenterAddObserver(darwin, NULL, OCSettingsDidChangeNotificationCallback, CFSTR("com.arichardson.openInChrome.settingsChanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
         
-        UpdateOpenInChromeSettings();
-        
-        static Class _SpringBoard, _SBBookmarkIcon;
-        
-        _SpringBoard = NSClassFromString(@"SpringBoard");
-        _SBBookmarkIcon = NSClassFromString(@"SBBookmarkIcon");
-        
-        static IMP origOpenURL = NULL;
-        SEL openURLSel = @selector(applicationOpenURL:publicURLsOnly:animating:sender:additionalActivationFlag:);
-        
-        void (^chromeOpenURL)(SpringBoard *, NSURL *, BOOL, BOOL, id, unsigned) = nil;
-        chromeOpenURL = ^(SpringBoard *sb, NSURL *url, BOOL publicOnly, BOOL animate, id sender, unsigned flag)
-        {
-            if (hookEnabled && [OpenInChromeModel shouldHandleURL:url])
-            {
-                NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:url];
-                if (replacedURL)
-                    url = replacedURL;
-            }
-            
-            origOpenURL(sb, openURLSel, url, publicOnly, animate, sender, flag);
-        };
-        
-        IMP chromeOpenURLImp = imp_implementationWithBlock(chromeOpenURL);
-        MSHookMessageEx(_SpringBoard, openURLSel, chromeOpenURLImp, &origOpenURL);
-        
-        static IMP origLaunch = NULL;
-        SEL launchSel = @selector(launch);
-        void (^chromeLaunchWebClip)(SBBookmarkIcon *) = ^(SBBookmarkIcon *icon)
-        {
-            if (hookEnabled) {
-                NSURL *pageURL = [icon webClip].pageURL;
-                
-                if (pageURL && [OpenInChromeModel shouldHandleURL:pageURL]) {
-                    NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:pageURL];
-                    if (replacedURL) {
-                        [[UIApplication sharedApplication] openURL:replacedURL];
-                        return;
-                    }
-                }
-            }
-            origLaunch(icon, launchSel);
-        };
-        
-        IMP chromeLaunchWebClipImp = imp_implementationWithBlock(chromeLaunchWebClip);
-        MSHookMessageEx(_SBBookmarkIcon, launchSel, chromeLaunchWebClipImp, &origLaunch);
+        OCUpdateSettings();
+		
+		CHLoadLateClass(SpringBoard);
+		CHLoadLateClass(SBApplicationController);
+		CHLoadLateClass(SBBookmarkIcon);
+		
+		CHHook5(SpringBoard, applicationOpenURL, publicURLsOnly, animating, sender, additionalActivationFlag); // iOS 5
+		CHHook7(SpringBoard, applicationOpenURL, withApplication, sender, publicURLsOnly, animating, needsPermission, additionalActivationFlags); // iOS 6+
+		CHHook0(SBBookmarkIcon, launch);
     }
 }

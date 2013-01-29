@@ -16,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0D1AF43016B76C1400D4BBF2 /* PrivateHeaders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrivateHeaders.h; sourceTree = "<group>"; };
 		0D493C97159D729C004DB4F8 /* openInChrome.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = openInChrome.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D493C9A159D729C004DB4F8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		0D493CA0159D729C004DB4F8 /* control */ = {isa = PBXFileReference; lastKnownFileType = text; name = control; path = Package/DEBIAN/control; sourceTree = "<group>"; };
@@ -76,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				0D85913F15AFED970095A559 /* OpenInChromeModel.h */,
+				0D1AF43016B76C1400D4BBF2 /* PrivateHeaders.h */,
 				0D85914015AFED970095A559 /* OpenInChromeModel.m */,
 				0D493CA4159D729D004DB4F8 /* openInChrome.mm */,
 				0D493C9D159D729C004DB4F8 /* Package */,
@@ -191,7 +193,7 @@
 		0D493C8D159D729C004DB4F8 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0460;
 			};
 			buildConfigurationList = 0D493C90159D729C004DB4F8 /* Build configuration list for PBXProject "openInChrome" */;
 			compatibilityVersion = "Xcode 3.2";

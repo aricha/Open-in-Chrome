@@ -3,12 +3,14 @@
 //
 
 #ifdef __OBJC__
-    #import <Foundation/Foundation.h>
+
+#import <Foundation/Foundation.h>
+#import "PrivateHeaders.h"
+
+#define CHAppName "Open in Chrome"
 
 #ifdef DEBUG
-#define DLog(format, ...) NSLog(format)
-#else
-#define DLog(format, ...)
+#define CHDebug
 #endif
 
 #endif

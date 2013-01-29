@@ -8,17 +8,10 @@
 
 #import "OpenInChromeModel.h"
 #import <UIKit/UIKit.h>
+#import <CaptainHook.h>
 
-UIKIT_EXTERN UIApplication *UIApp;
-
-@interface UIApplication ()
-
--(NSString *)displayIDForURLScheme:(NSString *)urlscheme isPublic:(BOOL)aPublic;
-
-@end
-
-static NSString *const ChromeSchemeHTTP = @"googlechrome";
-static NSString *const ChromeSchemeHTTPS = @"googlechromes";
+NSString *const ChromeSchemeHTTP = @"googlechrome";
+NSString *const ChromeSchemeHTTPS = @"googlechromes";
 
 @interface OpenInChromeModel ()
 
@@ -121,7 +114,7 @@ static NSString *const ChromeSchemeHTTPS = @"googlechromes";
     
     NSMutableString *searchURLString = [NSMutableString stringWithString:searchURLTemplate];
     
-    DLog(@"beginning placeholder parsing of template %@", searchURLString);
+    CHDebugLog(@"beginning placeholder parsing of template %@", searchURLString);
     
     BOOL hasPlaceholder = YES;
     while (hasPlaceholder) {
@@ -132,14 +125,14 @@ static NSString *const ChromeSchemeHTTPS = @"googlechromes";
             NSRange placeholderRange = NSMakeRange(placeholderStart, NSMaxRange(placeholderEndRange));
             NSRange placeholderTextRange = NSMakeRange(placeholderStart + 1, placeholderEndRange.location - 1);
             
-            DLog(@"placeholderRange: %@, string in range: %@", NSStringFromRange(placeholderRange), [searchURLString substringWithRange:placeholderRange]);
+            CHDebugLog(@"placeholderRange: %@, string in range: %@", NSStringFromRange(placeholderRange), [searchURLString substringWithRange:placeholderRange]);
             
             if (placeholderRange.location + placeholderRange.length <= searchURLString.length) {
                 NSString *replacedPlaceholder = placeholderHandler([searchURLString substringWithRange:placeholderTextRange]);
                 
                 if (!replacedPlaceholder) {
                     // could not handle placeholder, abort string parsing
-                    DLog(@"could not handle placeholder %@, aborting", [searchURLString substringWithRange:placeholderTextRange]);
+                    CHDebugLog(@"could not handle placeholder %@, aborting", [searchURLString substringWithRange:placeholderTextRange]);
                     searchURLString = nil;
                     break;
                 }
@@ -155,7 +148,7 @@ static NSString *const ChromeSchemeHTTPS = @"googlechromes";
     if (searchURLString && searchURLString.length > ChromeSchemeHTTP.length)
         searchURL = [NSURL URLWithString:searchURLString];
     
-    DLog(@"Built search URL %@ from search engine %@", searchURL, engine);
+    CHDebugLog(@"Built search URL %@ from search engine %@", searchURL, engine);
     
     return searchURL;
 }
