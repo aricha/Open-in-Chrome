@@ -22,14 +22,33 @@ UIKIT_EXTERN UIApplication *UIApp;
 
 #pragma mark - SpringBoard
 
-@interface SBBookmarkIcon : NSObject
-@property (nonatomic, retain) UIWebClip *webClip;
-- (void)launch;
+typedef NSInteger SBIconLaunchLocation;
+
+@interface SBIcon : NSObject
+- (void)launch; // iOS 5-6
+- (void)launchFromLocation:(SBIconLaunchLocation)location; // iOS 7
+@end
+
+@interface SBLeafIcon : SBIcon
+@end
+
+@protocol SBLeafIconDataSource <NSObject> // iOS 7
+- (BOOL)icon:(SBLeafIcon *)icon launchFromLocation:(SBIconLaunchLocation)location;
+@end
+
+@interface SBBookmark : NSObject <SBLeafIconDataSource> // iOS 7
+@property (retain, nonatomic) UIWebClip *webClip;
+@end
+
+@interface SBBookmarkIcon : SBLeafIcon
+@property (retain, nonatomic) UIWebClip *webClip; // iOS 5-6
+@property (retain, nonatomic) SBBookmark *bookmark; // iOS 7
 @end
 
 @interface SpringBoard : UIApplication
 -(void)applicationOpenURL:(id)url publicURLsOnly:(BOOL)only animating:(BOOL)animating sender:(id)sender additionalActivationFlag:(unsigned)flag; // iOS 5
--(void)applicationOpenURL:(NSURL *)url withApplication:(id)application sender:(id)sender publicURLsOnly:(BOOL)only animating:(BOOL)animating needsPermission:(BOOL)permission additionalActivationFlags:(id)flags; // iOS 6+
+-(void)applicationOpenURL:(NSURL *)url withApplication:(id)application sender:(id)sender publicURLsOnly:(BOOL)only animating:(BOOL)animating needsPermission:(BOOL)permission additionalActivationFlags:(id)flags; // iOS 6
+-(void)applicationOpenURL:(id)url withApplication:(id)application sender:(id)sender publicURLsOnly:(BOOL)only animating:(BOOL)animating needsPermission:(BOOL)permission additionalActivationFlags:(id)flags activationHandler:(id)handler; // iOS 7
 -(NSString *)displayIDForURLScheme:(NSString *)urlscheme isPublic:(BOOL)aPublic;
 @end
 

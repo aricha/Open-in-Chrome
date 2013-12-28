@@ -76,8 +76,8 @@
 		0D493C9C159D729C004DB4F8 /* openInChrome */ = {
 			isa = PBXGroup;
 			children = (
-				0D85913F15AFED970095A559 /* OpenInChromeModel.h */,
 				0D1AF43016B76C1400D4BBF2 /* PrivateHeaders.h */,
+				0D85913F15AFED970095A559 /* OpenInChromeModel.h */,
 				0D85914015AFED970095A559 /* OpenInChromeModel.m */,
 				0D493CA4159D729D004DB4F8 /* openInChrome.mm */,
 				0D493C9D159D729C004DB4F8 /* Package */,
