@@ -1,6 +1,6 @@
 Package: com.arichardson.openInChrome
 Name: Open in Chrome
-Version: 1.2
+Version: 1.3
 Description: Open Safari links in Google Chrome!
 Section: Tweaks
 Depends: firmware (>= 5.0), mobilesubstrate
