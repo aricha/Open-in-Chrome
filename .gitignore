@@ -1,3 +1,5 @@
 LatestBuild
 openInChrome.xcodeproj/project.xcworkspace
 openInChrome.xcodeproj/xcuserdata
+Packages
+openInChrome/Package/Library/MobileSubstrate/DynamicLibraries

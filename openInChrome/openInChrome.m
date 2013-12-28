@@ -1,5 +1,5 @@
 //
-//  openInChrome.mm
+//  openInChrome.m
 //  openInChrome
 //
 //  Created by Andrew Richardson on 12-06-28.

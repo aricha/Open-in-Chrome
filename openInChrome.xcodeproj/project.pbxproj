@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0D493C9B159D729C004DB4F8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D493C9A159D729C004DB4F8 /* Foundation.framework */; };
-		0D493CA5159D729D004DB4F8 /* openInChrome.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D493CA4159D729D004DB4F8 /* openInChrome.mm */; };
+		0D493CA5159D729D004DB4F8 /* openInChrome.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D493CA4159D729D004DB4F8 /* openInChrome.m */; };
 		0D493CB0159D79A1004DB4F8 /* libsubstrate.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D493CAF159D79A1004DB4F8 /* libsubstrate.dylib */; };
 		0D85913E15AEAD7B0095A559 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D85913D15AEAD7B0095A559 /* UIKit.framework */; };
 		0D85914115AFED970095A559 /* OpenInChromeModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D85913F15AFED970095A559 /* OpenInChromeModel.h */; };
@@ -21,7 +21,7 @@
 		0D493C9A159D729C004DB4F8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		0D493CA0159D729C004DB4F8 /* control */ = {isa = PBXFileReference; lastKnownFileType = text; name = control; path = Package/DEBIAN/control; sourceTree = "<group>"; };
 		0D493CA3159D729C004DB4F8 /* openInChrome-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "openInChrome-Prefix.pch"; sourceTree = "<group>"; };
-		0D493CA4159D729D004DB4F8 /* openInChrome.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = openInChrome.mm; sourceTree = "<group>"; };
+		0D493CA4159D729D004DB4F8 /* openInChrome.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = openInChrome.m; sourceTree = "<group>"; };
 		0D493CA9159D729D004DB4F8 /* openInChrome.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = openInChrome.plist; path = Package/Library/MobileSubstrate/DynamicLibraries/openInChrome.plist; sourceTree = "<group>"; };
 		0D493CAF159D79A1004DB4F8 /* libsubstrate.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsubstrate.dylib; path = /opt/iOSOpenDev/lib/libsubstrate.dylib; sourceTree = "<absolute>"; };
 		0D493CB4159D843B004DB4F8 /* OpenInChrome.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = OpenInChrome.plist; sourceTree = "<group>"; };
@@ -79,7 +79,7 @@
 				0D1AF43016B76C1400D4BBF2 /* PrivateHeaders.h */,
 				0D85913F15AFED970095A559 /* OpenInChromeModel.h */,
 				0D85914015AFED970095A559 /* OpenInChromeModel.m */,
-				0D493CA4159D729D004DB4F8 /* openInChrome.mm */,
+				0D493CA4159D729D004DB4F8 /* openInChrome.m */,
 				0D493C9D159D729C004DB4F8 /* Package */,
 				0D493CA1159D729C004DB4F8 /* Supporting Files */,
 			);
@@ -233,7 +233,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0D493CA5159D729D004DB4F8 /* openInChrome.mm in Sources */,
+				0D493CA5159D729D004DB4F8 /* openInChrome.m in Sources */,
 				0D85914215AFED970095A559 /* OpenInChromeModel.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
