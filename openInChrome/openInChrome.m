@@ -50,30 +50,34 @@ CHDeclareClass(SBBookmarkIcon)
 CHDeclareClass(SBApplicationController)
 CHDeclareClass(SBBookmark)
 
-static void HandleApplicationOpenURL(SpringBoard *self, NSURL **urlRef, SBApplication **applicationRef)
+static BOOL HandleApplicationOpenURL(SpringBoard *self, NSURL **urlRef, SBApplication **applicationRef)
 {
     if (!urlRef)
-        return;
+        return NO;
     
+    BOOL handled = NO;
     if (OCHookEnabled && [OpenInChromeModel shouldHandleURL:*urlRef])
 	{
 		NSURL *replacedURL = [OpenInChromeModel formatURLForChrome:*urlRef];
-		if (replacedURL)
+		if (replacedURL) {
 			*urlRef = replacedURL;
+            handled = YES;
+        }
         
-        if (applicationRef && OCShouldReplaceURLForApplication(*applicationRef) && CHRespondsTo(self, displayIDForURLScheme:isPublic:)) {
+        if (handled && applicationRef && OCShouldReplaceURLForApplication(*applicationRef) && CHRespondsTo(self, displayIDForURLScheme:isPublic:)) {
             NSString *displayID = [self displayIDForURLScheme:ChromeSchemeHTTP isPublic:YES];
             if (displayID) {
                 SBApplication *replacedApp = [[CHClass(SBApplicationController) sharedInstanceIfExists] applicationWithDisplayIdentifier:displayID];
-                CHDebugLog(@"replacing app %@ with Chrome app %@ with displayID %@", application, replacedApp, displayID);
+                CHDebugLog(@"replacing app %@ with Chrome app %@ with displayID %@", *applicationRef, replacedApp, displayID);
                 *applicationRef = replacedApp;
             }
         }
 	}
+    return handled;
 }
 
 // iOS 5
-CHOptimizedMethod5(super, void, SpringBoard, applicationOpenURL, NSURL *, url, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animate, sender, id, sender, additionalActivationFlag, unsigned, flag)
+CHOptimizedMethod5(self, void, SpringBoard, applicationOpenURL, NSURL *, url, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animate, sender, id, sender, additionalActivationFlag, unsigned, flag)
 {
 	CHDebugLog(@"Opening URL %@ using iOS 5 method", url);
 	
@@ -83,7 +87,7 @@ CHOptimizedMethod5(super, void, SpringBoard, applicationOpenURL, NSURL *, url, p
 }
 
 // iOS 6
-CHOptimizedMethod7(super, void, SpringBoard, applicationOpenURL, NSURL *, url, withApplication, SBApplication *, application, sender, id, sender, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animating, needsPermission, BOOL, needsPermission, additionalActivationFlags, id, flags)
+CHOptimizedMethod7(self, void, SpringBoard, applicationOpenURL, NSURL *, url, withApplication, SBApplication *, application, sender, id, sender, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animating, needsPermission, BOOL, needsPermission, additionalActivationFlags, id, flags)
 {
 	CHDebugLog(@"Opening URL %@ with application %@ using iOS 6 method", url, application);
 	
@@ -93,13 +97,24 @@ CHOptimizedMethod7(super, void, SpringBoard, applicationOpenURL, NSURL *, url, w
 }
 
 // iOS 7
-CHOptimizedMethod8(super, void, SpringBoard, applicationOpenURL, NSURL *, url, withApplication, SBApplication *, application, sender, id, sender, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animating, needsPermission, BOOL, needsPermission, additionalActivationFlags, id, flags, activationHandler, id, activationHandler)
+CHOptimizedMethod8(self, void, SpringBoard, applicationOpenURL, NSURL *, url, withApplication, SBApplication *, application, sender, id, sender, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animating, needsPermission, BOOL, needsPermission, additionalActivationFlags, id, flags, activationHandler, id, activationHandler)
 {
     CHDebugLog(@"Opening URL %@ with application %@ using iOS 7 method", url, application);
     
-    HandleApplicationOpenURL(self, &url, &application);
+    // SpringBoard appears to be doing some setup prior to calling this method that is application-specific,
+    // so changing the app from within this method causes a nasty hang. Rather than try and recreate that setup,
+    // just set up a new openURL stack instead and suppress hooking behaviour to avoid the risk of an infinite loop.
+    static BOOL suppressed = NO;
+    BOOL handled = NO;
+    if (!suppressed && (handled = HandleApplicationOpenURL(self, &url, &application))) {
+        suppressed = YES;
+        [self applicationOpenURL:url publicURLsOnly:NO];
+        suppressed = NO;
+    }
     
-    CHSuper8(SpringBoard, applicationOpenURL, url, withApplication, application, sender, sender, publicURLsOnly, publicOnly, animating, animating, needsPermission, needsPermission, additionalActivationFlags, flags, activationHandler, activationHandler);
+    if (!handled) {
+        CHSuper8(SpringBoard, applicationOpenURL, url, withApplication, application, sender, sender, publicURLsOnly, publicOnly, animating, animating, needsPermission, needsPermission, additionalActivationFlags, flags, activationHandler, activationHandler);
+    }
 }
 
 static BOOL HandleBookmarkIconLaunch(UIWebClip *webClip)
@@ -118,7 +133,7 @@ static BOOL HandleBookmarkIconLaunch(UIWebClip *webClip)
     return handled;
 }
 
-CHOptimizedMethod0(super, void, SBBookmarkIcon, launch)
+CHOptimizedMethod0(self, void, SBBookmarkIcon, launch)
 {
     if (OCHookEnabled && HandleBookmarkIconLaunch(self.webClip)) {
         return;
@@ -127,7 +142,7 @@ CHOptimizedMethod0(super, void, SBBookmarkIcon, launch)
     }
 }
 
-CHOptimizedMethod2(super, BOOL, SBBookmark, icon, SBLeafIcon *, icon, launchFromLocation, SBIconLaunchLocation, location)
+CHOptimizedMethod2(self, BOOL, SBBookmark, icon, SBLeafIcon *, icon, launchFromLocation, SBIconLaunchLocation, location)
 {
     if (OCHookEnabled && HandleBookmarkIconLaunch(self.webClip)) {
         return YES;
