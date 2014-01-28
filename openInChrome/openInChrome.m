@@ -27,12 +27,7 @@ static void OCUpdateSettings() {
 
 static void OCSettingsDidChangeNotificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
 {
-	NSDictionary *settings = [[NSUserDefaults standardUserDefaults] persistentDomainForName:OCBundleID];
-    
-    NSNumber *enabled = [settings objectForKey:kOCOpenInChromeEnabled];
-    if (enabled) {
-        OCHookEnabled = [enabled boolValue];
-    }
+	OCUpdateSettings();
 }
 
 static BOOL OCShouldReplaceURLForApplication(SBApplication *app)
