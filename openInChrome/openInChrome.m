@@ -33,11 +33,16 @@ static void OCSettingsDidChangeNotificationCallback(CFNotificationCenterRef cent
 static BOOL OCShouldReplaceURLForApplication(SBApplication *app)
 {
 	if (!app) return YES;
-	
-	NSString *displayID = [app displayIdentifier];
-	
+
+    NSString *bundleID = @"";
+    if (CHRespondsTo(app, bundleIdentifier)) {
+        bundleID = [app bundleIdentifier];
+    } else if (CHRespondsTo(app, displayIdentifier)) {
+        bundleID = [app displayIdentifier];
+    }
+
 	// only replace for Safari (or no specific app)
-	return (!displayID || [displayID isEqualToString:@"com.apple.mobilesafari"]);
+	return (!bundleID || [bundleID isEqualToString:@"com.apple.mobilesafari"]);
 }
 
 CHDeclareClass(SpringBoard)
@@ -62,9 +67,20 @@ static BOOL HandleApplicationOpenURL(SpringBoard *self, NSURL **urlRef, SBApplic
         if (handled && applicationRef && OCShouldReplaceURLForApplication(*applicationRef) && CHRespondsTo(self, displayIDForURLScheme:isPublic:)) {
             NSString *displayID = [self displayIDForURLScheme:ChromeSchemeHTTP isPublic:YES];
             if (displayID) {
-                SBApplication *replacedApp = [[CHClass(SBApplicationController) sharedInstanceIfExists] applicationWithDisplayIdentifier:displayID];
-                CHDebugLog(@"replacing app %@ with Chrome app %@ with displayID %@", *applicationRef, replacedApp, displayID);
-                *applicationRef = replacedApp;
+                SBApplication *replacedApp = nil;
+
+                SBApplicationController *appController = [CHClass(SBApplicationController) sharedInstanceIfExists];
+                if (CHRespondsTo(appController, applicationWithBundleIdentifier:)) {
+                    // TODO: Does any translation from display ID -> bundle ID need to be done?
+                    replacedApp = [appController applicationWithBundleIdentifier:displayID];
+                } else if (CHRespondsTo(appController, applicationWithDisplayIdentifier:)) {
+                    replacedApp = [appController applicationWithDisplayIdentifier:displayID];
+                }
+
+                if (replacedApp) {
+                    CHDebugLog(@"replacing app %@ with Chrome app %@ with displayID %@", *applicationRef, replacedApp, displayID);
+                    *applicationRef = replacedApp;
+                }
             }
         }
 	}
@@ -99,7 +115,11 @@ static BOOL HandleApplicationOpenURLWithReentrantGuard(SpringBoard *self, NSURL 
     BOOL handled = NO;
     if (!suppressed && (handled = HandleApplicationOpenURL(self, urlRef, applicationRef))) {
         suppressed = YES;
-        [self applicationOpenURL:*urlRef publicURLsOnly:NO];
+        if (CHRespondsTo(self, applicationOpenURL:)) {
+            [self applicationOpenURL:*urlRef];
+        } else if (CHRespondsTo(self, applicationOpenURL:publicURLsOnly:)) {
+            [self applicationOpenURL:*urlRef publicURLsOnly:NO];
+        }
         suppressed = NO;
     }
     return handled;
@@ -122,6 +142,16 @@ CHOptimizedMethod8(self, void, SpringBoard, applicationOpenURL, NSURL *, url, wi
     
     if (!HandleApplicationOpenURLWithReentrantGuard(self, &url, &application)) {
         CHSuper8(SpringBoard, applicationOpenURL, url, withApplication, application, sender, sender, publicURLsOnly, publicOnly, animating, animating, needsPermission, needsPermission, activationContext, context, activationHandler, activationHandler);
+    }
+}
+
+// iOS 8
+CHOptimizedMethod8(self, void, SpringBoard, applicationOpenURL, NSURL *, url, withApplication, SBApplication *, application, sender, id, sender, publicURLsOnly, BOOL, publicOnly, animating, BOOL, animating, needsPermission, BOOL, needsPermission, activationSettings, id, settings, withResult, id, resultHandler)
+{
+    CHDebugLog(@"Opening URL %@ with application %@ using iOS 8 method", url, application);
+
+    if (!HandleApplicationOpenURLWithReentrantGuard(self, &url, &application)) {
+        CHSuper8(SpringBoard, applicationOpenURL, url, withApplication, application, sender, sender, publicURLsOnly, publicOnly, animating, animating, needsPermission, needsPermission, activationSettings, settings, withResult, resultHandler);
     }
 }
 
@@ -176,7 +206,8 @@ CHConstructor
 		CHHook7(SpringBoard, applicationOpenURL, withApplication, sender, publicURLsOnly, animating, needsPermission, additionalActivationFlags); // iOS 6
         CHHook8(SpringBoard, applicationOpenURL, withApplication, sender, publicURLsOnly, animating, needsPermission, additionalActivationFlags, activationHandler); // iOS 7.0
         CHHook8(SpringBoard, applicationOpenURL, withApplication, sender, publicURLsOnly, animating, needsPermission, activationContext, activationHandler); // iOS 7.1
-        
+        CHHook8(SpringBoard, applicationOpenURL, withApplication, sender, publicURLsOnly, animating, needsPermission, activationSettings, withResult); // iOS 8
+
 		CHHook0(SBBookmarkIcon, launch); // iOS 5-6
         CHHook2(SBBookmark, icon, launchFromLocation); // iOS 7.x
     }
